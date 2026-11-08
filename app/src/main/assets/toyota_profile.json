@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "comment": "ВСЕ записи НЕ проверены на Auris E150. Адреса и формулы взяты из публичных списков Torque для Prius Gen2 (PriusChat, oguchi-rd). Значение попадает на главный экран только после ручной отметки 'проверено' в настройках. Реальные PID вашей машины находит сканер ЭБУ.",
+  "entries": [
+    {
+      "id": "hv_ecu_ce_raw",
+      "name": "Батарейный ЭБУ 21CE (SOC/ток/блоки в Gen2)",
+      "header": "7E3", "mode": "21", "pid": "CE",
+      "expr": "",
+      "source": "oguchi-rd Gen2: 7E3 21CE — SOC, ток, напряжения блоков; формулы не опубликованы"
+    },
+    {
+      "id": "hv_ecu_cf_raw",
+      "name": "Батарейный ЭБУ 21CF (температуры в Gen2)",
+      "header": "7E3", "mode": "21", "pid": "CF",
+      "expr": "",
+      "source": "oguchi-rd Gen2: 7E3 21CF — температуры HV-батареи; формулы не опубликованы"
+    },
+    {
+      "id": "hv_charge_limit",
+      "name": "Лимит заряда HV",
+      "header": "7E3", "mode": "21", "pid": "CF",
+      "expr": "E-64", "unit": "kW", "min": -70, "max": 70,
+      "source": "PriusChat Gen2 Torque: 'HV Battery Charge' 21CF E-64 (автор: не тестировалось)"
+    },
+    {
+      "id": "hv_discharge_limit",
+      "name": "Лимит разряда HV",
+      "header": "7E3", "mode": "21", "pid": "CF",
+      "expr": "F-64", "unit": "kW", "min": -70, "max": 70,
+      "source": "PriusChat Gen2 Torque: 'HV Battery Discharge' 21CF F-64"
+    },
+    {
+      "id": "hv_fan_mode",
+      "name": "Режим вентилятора HV",
+      "header": "7E3", "mode": "21", "pid": "CF",
+      "expr": "I", "unit": "", "min": 0, "max": 10,
+      "source": "PriusChat Gen2 Torque: 'HV Battery Fan Mode' 21CF I"
+    },
+    {
+      "id": "mg1_temp",
+      "name": "Температура MG1",
+      "header": "7E2", "mode": "21", "pid": "C3",
+      "expr": "AA-50", "unit": "°C", "min": -40, "max": 200,
+      "source": "PriusChat Gen2 Torque: 21C3 '1.8*AA-58' °F → AA-50 °C"
+    },
+    {
+      "id": "mg2_temp",
+      "name": "Температура MG2",
+      "header": "7E2", "mode": "21", "pid": "C3",
+      "expr": "AB-50", "unit": "°C", "min": -40, "max": 200,
+      "source": "PriusChat Gen2 Torque: 21C3 '1.8*AB-58' °F → AB-50 °C"
+    }
+  ]
+}
