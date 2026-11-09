@@ -13,6 +13,7 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Локальный «виртуальный ELM327» на 127.0.0.1:<port>.
@@ -25,6 +26,8 @@ class ObdProxyServer(
     private val arbiter: () -> ElmArbiter?,
     private val onClientChange: (connected: Boolean) -> Unit,
 ) {
+    private val clients = AtomicInteger(0)
+
     suspend fun run() = coroutineScope {
         val server = withContext(Dispatchers.IO) {
             ServerSocket().apply {
@@ -57,7 +60,7 @@ class ObdProxyServer(
     }
 
     private suspend fun handle(s: Socket) {
-        onClientChange(true)
+        onClientChange(clients.incrementAndGet() > 0)
         try {
             s.soTimeout = 1000
             s.tcpNoDelay = true
@@ -104,7 +107,7 @@ class ObdProxyServer(
         } catch (e: IOException) {
             // клиент отключился
         } finally {
-            onClientChange(false)
+            onClientChange(clients.decrementAndGet() > 0)
             runCatching { s.close() }
         }
     }

@@ -36,6 +36,8 @@ class ElmArbiter(
     /** Несколько команд подряд без вмешательства клиента (например ATSH + запрос). */
     suspend fun <T> launcherBatch(block: suspend (ElmSend) -> T): T = mutex.withLock {
         if (owner != Owner.LAUNCHER) {
+            // Сначала откатить настройки, которые менял клиент и которые лаунчер сам не задаёт.
+            for (family in clientAt.keys) RESTORE[family]?.let { elm.command(it, 1500L) }
             for (c in LAUNCHER_STATE) elm.command(c, 1500L)
             owner = Owner.LAUNCHER
         }
@@ -72,6 +74,12 @@ class ElmArbiter(
 
     private companion object {
         val LAUNCHER_STATE = listOf("ATE0", "ATL0", "ATS0", "ATH0", "ATSH7DF")
+
+        /** Значения ELM327 по умолчанию для настроек, которые может поменять клиент. */
+        val RESTORE = mapOf(
+            "CAF" to "ATCAF1", "CFC" to "ATCFC1", "CRA" to "ATAR", "CF" to "ATAR", "CM" to "ATAR",
+            "ST" to "ATST32", "AT" to "ATAT1", "AL" to "ATNL", "R" to "ATR1",
+        )
         val FAMILIES = listOf(
             "CAF", "CFC", "CRA", "SH", "SP", "TP", "ST", "AT", "CF", "CM", "AL", "NL",
             "E", "H", "S", "L", "R",

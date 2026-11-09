@@ -143,10 +143,13 @@ class ObdManager(private val context: Context, private val prefs: Prefs) {
         var lastError: String? = null
         while (currentCoroutineContext().isActive) {
             attempt++
-            _state.value = ObdSnapshot(
-                ObdState.CONNECTING, "${cfg.label}, попытка $attempt",
-                transport = cfg.label, proxyEnabled = proxy
-            )
+            _state.update {
+                ObdSnapshot(
+                    ObdState.CONNECTING, "${cfg.label}, попытка $attempt",
+                    transport = cfg.label, proxyEnabled = proxy,
+                    proxyClientConnected = it.proxyClientConnected, proxyMessage = it.proxyMessage
+                )
+            }
             try {
                 Elm327Client(Transports.open(context, cfg)).use { elm ->
                     elm.initialize()
@@ -163,11 +166,13 @@ class ObdManager(private val context: Context, private val prefs: Prefs) {
             } finally {
                 arbiter = null
             }
-            _state.value = ObdSnapshot(
-                ObdState.RECONNECTING,
-                "${lastError ?: "связь потеряна"} · повтор через ${backoff / 1000} с",
-                transport = cfg.label, proxyEnabled = proxy
-            )
+            val msg = "${lastError ?: "связь потеряна"} · повтор через ${backoff / 1000} с"
+            _state.update {
+                ObdSnapshot(
+                    ObdState.RECONNECTING, msg, transport = cfg.label, proxyEnabled = proxy,
+                    proxyClientConnected = it.proxyClientConnected, proxyMessage = it.proxyMessage
+                )
+            }
             // Ждём backoff или сигнал «Wi-Fi снова доступен» — что раньше.
             withTimeoutOrNull(backoff) { kicks.receive() }
             backoff = (backoff * 2).coerceAtMost(MAX_BACKOFF)
