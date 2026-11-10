@@ -5,16 +5,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import java.util.concurrent.ConcurrentHashMap
 import com.aurishybrid.launcher.core.Prefs
 
 enum class SlotId(val title: String) {
-    HYBRID("Hybrid"),
+    HYBRID("Hybrid Assistant"),
     WAZE("Waze"),
     MAPS("Карты"),
     RADIO("Радио"),
     BLUETOOTH("Bluetooth"),
     MUSIC("Музыка"),
-    SETTINGS("Настройки"),
+    SETTINGS("Android"),
 }
 
 data class AppEntry(val packageName: String, val label: String)
@@ -37,6 +41,16 @@ data class ResolvedSlot(val id: SlotId, val target: LaunchTarget?, val how: Stri
 class AppLauncher(private val context: Context, private val prefs: Prefs) {
 
     private val pm: PackageManager = context.packageManager
+    private val iconCache = ConcurrentHashMap<String, ImageBitmap>()
+
+    /** Иконка приложения 128×128 (кэшируется). Вызывать не из главного потока. */
+    fun icon(pkg: String): ImageBitmap? = iconCache[pkg] ?: try {
+        pm.getApplicationIcon(pkg).toBitmap(128, 128).asImageBitmap().also { iconCache[pkg] = it }
+    } catch (e: Exception) {
+        null
+    }
+
+    fun launchPackage(from: Context, pkg: String): Boolean = launch(from, LaunchTarget.App(pkg, pkg))
 
     @Suppress("DEPRECATION")
     fun launchableApps(): List<AppEntry> {

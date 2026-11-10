@@ -58,6 +58,16 @@ class Prefs(context: Context) {
         get() = sp.getLong("pending_autostart", 0L)
         set(v) = sp.edit().putLong("pending_autostart", v).apply()
 
+    /** Масштаб интерфейса относительно базовой вёрстки (0.8…1.3). */
+    var uiScale: Float
+        get() = sp.getFloat("ui_scale", 1f)
+        set(v) = sp.edit().putFloat("ui_scale", v).apply()
+
+    /** JSON текущей поездки и истории (TripComputer). */
+    var tripJson: String?
+        get() = sp.getString("trip_json", null)
+        set(v) = sp.edit().putString("trip_json", v).apply()
+
     fun slotPackage(id: SlotId): String? = sp.getString("slot_${id.name}", null)
 
     fun setSlotPackage(id: SlotId, pkg: String?) {

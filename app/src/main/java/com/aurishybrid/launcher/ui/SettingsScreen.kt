@@ -65,7 +65,6 @@ fun SettingsScreen(
     slots: List<ResolvedSlot>,
     onSlotsChanged: () -> Unit,
     onRequestPermissions: () -> Unit,
-    onBack: () -> Unit,
 ) {
     val prefs = app.prefs
     val context = LocalContext.current
@@ -73,21 +72,9 @@ fun SettingsScreen(
     var delaySec by remember { mutableFloatStateOf(prefs.autostartDelaySec.toFloat()) }
     var onWake by remember { mutableStateOf(prefs.autostartOnWake) }
     var pickerFor by remember { mutableStateOf<SlotId?>(null) }
+    var uiScale by remember { mutableFloatStateOf(prefs.uiScale.coerceIn(0.8f, 1.3f)) }
 
-    BackHandler { onBack() }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(AurisColors.Night)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ Назад", color = AurisColors.Cyan, fontSize = 16.sp) }
-            Spacer(Modifier.width(12.dp))
-            Text("Настройки лаунчера", color = AurisColors.Fg, fontSize = 20.sp, fontWeight = FontWeight.Light)
-        }
+    Column(Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, bottom = 8.dp)) {
         Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             // ---- Левая колонка
             Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
@@ -114,9 +101,24 @@ fun SettingsScreen(
                             "поэтому лаунчер только запускает приложение и не читает его данные."
                     )
                 }
-                Section("Лаунчер по умолчанию") {
+                Section("Интерфейс") {
+                    Text("Масштаб: ${(uiScale * 100).roundToInt()} %", color = AurisColors.Fg, fontSize = 14.sp)
+                    Slider(
+                        value = uiScale, onValueChange = { uiScale = it },
+                        onValueChangeFinished = {
+                            val v = (uiScale * 20).roundToInt() / 20f
+                            uiScale = v; prefs.uiScale = v; app.uiScale.floatValue = v
+                        },
+                        valueRange = 0.8f..1.3f
+                    )
+                    Hint("Размер всех элементов и текста. Применяется, когда отпускаете ползунок.")
+                }
+                Section("Система") {
                     TextButton(onClick = { openHomeSettings(context) }) {
-                        Text("Открыть выбор главного экрана (Home app)", color = AurisColors.Cyan)
+                        Text("Выбор главного экрана (Home app)", color = AurisColors.Cyan)
+                    }
+                    TextButton(onClick = { openAndroidSettings(context) }) {
+                        Text("Настройки Android", color = AurisColors.Cyan)
                     }
                 }
                 Section("Быстрый доступ") {
@@ -172,17 +174,17 @@ fun SettingsScreen(
 
 @Composable
 internal fun Section(title: String, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(10.dp)
+    val shape = RoundedCornerShape(16.dp)
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
+            .padding(vertical = 5.dp)
             .clip(shape)
             .background(AurisColors.Panel)
             .border(1.dp, AurisColors.Line, shape)
             .padding(12.dp)
     ) {
-        Text(title.uppercase(), color = AurisColors.Cyan, fontSize = 12.sp, letterSpacing = 1.5.sp)
+        Text(title.uppercase(), color = AurisColors.Cyan, fontSize = 13.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.SemiBold)
         content()
     }
 }
@@ -197,7 +199,15 @@ internal fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> U
 
 @Composable
 internal fun Hint(text: String) {
-    Text(text, color = AurisColors.FgDim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 2.dp))
+    Text(text, color = AurisColors.FgDim, fontSize = 12.sp, modifier = Modifier.padding(vertical = 2.dp))
+}
+
+private fun openAndroidSettings(ctx: Context) {
+    try {
+        ctx.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (e: Exception) {
+        // на прошивке нет стандартного экрана настроек
+    }
 }
 
 private fun openHomeSettings(ctx: Context) {

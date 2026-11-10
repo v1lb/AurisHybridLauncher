@@ -18,7 +18,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** Собственные минималистичные линейные иконки (без чужих логотипов и без тяжёлых icon-библиотек). */
-enum class Glyph { HYBRID, NAV, PIN, RADIO, BLUETOOTH, MUSIC, GEAR }
+enum class Glyph { HYBRID, NAV, PIN, RADIO, BLUETOOTH, MUSIC, GEAR, HOME, PHONE, CAR, GRID }
 
 fun SlotId.glyph(): Glyph = when (this) {
     SlotId.HYBRID -> Glyph.HYBRID
@@ -88,6 +88,38 @@ fun GlyphIcon(glyph: Glyph, color: Color, modifier: Modifier = Modifier.size(28.
                 line(p(.42f, .76f), p(.42f, .20f))
                 line(p(.84f, .66f), p(.84f, .12f))
                 line(p(.42f, .20f), p(.84f, .12f), 1.5f)
+            }
+            Glyph.HOME -> {
+                val path = Path().apply {
+                    moveTo(.12f * w, .50f * h); lineTo(.5f * w, .14f * h); lineTo(.88f * w, .50f * h)
+                    moveTo(.22f * w, .44f * h); lineTo(.22f * w, .86f * h); lineTo(.78f * w, .86f * h); lineTo(.78f * w, .44f * h)
+                }
+                drawPath(path = path, color = color, style = stroke)
+            }
+            Glyph.PHONE -> {
+                drawRoundRect(
+                    color = color, topLeft = p(.28f, .08f), size = Size(.44f * w, .84f * h),
+                    cornerRadius = CornerRadius(w * .08f), style = stroke
+                )
+                line(p(.44f, .78f), p(.56f, .78f))
+            }
+            Glyph.CAR -> {
+                val path = Path().apply {
+                    moveTo(.10f * w, .68f * h); lineTo(.10f * w, .50f * h); lineTo(.22f * w, .46f * h)
+                    lineTo(.32f * w, .28f * h); lineTo(.68f * w, .28f * h); lineTo(.78f * w, .46f * h)
+                    lineTo(.90f * w, .50f * h); lineTo(.90f * w, .68f * h); close()
+                }
+                drawPath(path = path, color = color, style = stroke)
+                drawCircle(color = color, radius = w * .08f, center = p(.28f, .72f))
+                drawCircle(color = color, radius = w * .08f, center = p(.72f, .72f))
+            }
+            Glyph.GRID -> {
+                for (ix in 0 until 3) for (iy in 0 until 3) {
+                    drawRoundRect(
+                        color = color, topLeft = p(.14f + ix * .27f, .14f + iy * .27f),
+                        size = Size(.18f * w, .18f * h), cornerRadius = CornerRadius(w * .04f)
+                    )
+                }
             }
             Glyph.GEAR -> {
                 drawCircle(color = color, radius = w * .15f, center = center, style = stroke)

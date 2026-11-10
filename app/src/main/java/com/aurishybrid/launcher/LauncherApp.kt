@@ -6,16 +6,22 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.core.content.ContextCompat
 import com.aurishybrid.launcher.apps.AppLauncher
 import com.aurishybrid.launcher.core.Prefs
 import com.aurishybrid.launcher.data.ShareMode
+import com.aurishybrid.launcher.data.TripComputer
 import com.aurishybrid.launcher.data.VehicleRepository
 import com.aurishybrid.launcher.data.obd.ObdManager
 import com.aurishybrid.launcher.service.ObdProxyService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /** Простой service locator без DI-фреймворков (минимум RAM и зависимостей). */
 class LauncherApp : Application() {
@@ -28,6 +34,13 @@ class LauncherApp : Application() {
         private set
     lateinit var vehicle: VehicleRepository
         private set
+    lateinit var trip: TripComputer
+        private set
+
+    /** Масштаб интерфейса; меняется в настройках и сразу применяется темой. */
+    val uiScale = mutableFloatStateOf(1f)
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _autostartSignal = MutableStateFlow(0)
     /** Сигнал для MainActivity: «есть отложенный автозапуск Hybrid Assistant». */
@@ -39,6 +52,10 @@ class LauncherApp : Application() {
         apps = AppLauncher(this, prefs)
         obd = ObdManager(this, prefs)
         vehicle = VehicleRepository(this, prefs, obd)
+        trip = TripComputer(prefs, obd.state)
+        uiScale.floatValue = prefs.uiScale.coerceIn(0.8f, 1.3f)
+        // Бортовой компьютер копит данные всё время, пока идёт опрос OBD2 (в т.ч. из сервиса-прокси).
+        appScope.launch { trip.run() }
 
         // Пробуждение магнитолы (ACC ON после сна): экран включается.
         ContextCompat.registerReceiver(
