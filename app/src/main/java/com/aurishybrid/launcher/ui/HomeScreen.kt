@@ -34,6 +34,7 @@ import com.aurishybrid.launcher.data.MinuteBar
 import com.aurishybrid.launcher.data.TripState
 import com.aurishybrid.launcher.data.TripStats
 import com.aurishybrid.launcher.data.VehicleData
+import com.aurishybrid.launcher.media.MediaState
 import com.aurishybrid.launcher.ui.theme.AurisColors
 import java.util.Locale
 
@@ -48,6 +49,8 @@ fun fmtDuration(sec: Double): String {
 fun HomeScreen(
     data: VehicleData,
     trip: TripState,
+    media: MediaState,
+    mediaActions: MediaActions,
     shortcuts: List<ResolvedSlot>,
     autostartCountdown: Int?,
     onCancelAutostart: () -> Unit,
@@ -62,7 +65,10 @@ fun HomeScreen(
         ) {
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 EnergyMonitor(data, Modifier.weight(0.60f).fillMaxHeight().card(onOpenEnergy))
-                TripCard(trip.current, Modifier.weight(0.40f).fillMaxHeight().card(onOpenTrip))
+                Column(Modifier.weight(0.40f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MediaCard(media, mediaActions, Modifier.fillMaxWidth().height(118.dp))
+                    TripCard(trip.current, Modifier.fillMaxWidth().weight(1f).card(onOpenTrip))
+                }
             }
             Row(Modifier.fillMaxWidth().height(94.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MetricTile("Скорость", fmt(data.speedKmh, 0), "км/ч", data.speedSource, Modifier.weight(1f))
@@ -156,13 +162,12 @@ private fun TripCard(t: TripStats, modifier: Modifier) {
             val avg = t.avgL100
             Text(
                 fmt(avg, 1), color = if (avg == null) AurisColors.FgDim else AurisColors.Fg,
-                fontSize = 46.sp, fontWeight = FontWeight.Bold, maxLines = 1
+                fontSize = 38.sp, fontWeight = FontWeight.Bold, maxLines = 1
             )
             Spacer(Modifier.width(8.dp))
-            Text("л/100 км", color = AurisColors.Cyan, fontSize = 15.sp, modifier = Modifier.padding(bottom = 9.dp))
+            Text("л/100 км", color = AurisColors.Cyan, fontSize = 15.sp, modifier = Modifier.padding(bottom = 7.dp))
         }
         StatRow("Пробег", if (t.hasData) fmtKm(t.distanceKm) + " км" else NA)
-        StatRow("Время", if (t.hasData) fmtDuration(t.coveredSec) else NA)
         StatRow("EV-режим", t.evRatioPct?.let { fmt(it, 0) + " %" } ?: NA)
         Spacer(Modifier.height(6.dp))
         ConsumptionBars(t.minutes, Modifier.fillMaxWidth().weight(1f), showAxis = false)

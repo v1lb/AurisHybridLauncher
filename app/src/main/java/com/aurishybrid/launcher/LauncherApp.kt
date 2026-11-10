@@ -14,6 +14,7 @@ import com.aurishybrid.launcher.data.ShareMode
 import com.aurishybrid.launcher.data.TripComputer
 import com.aurishybrid.launcher.data.VehicleRepository
 import com.aurishybrid.launcher.data.obd.ObdManager
+import com.aurishybrid.launcher.media.MediaRepository
 import com.aurishybrid.launcher.service.ObdProxyService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,8 @@ class LauncherApp : Application() {
         private set
     lateinit var trip: TripComputer
         private set
+    lateinit var media: MediaRepository
+        private set
 
     /** Масштаб интерфейса; меняется в настройках и сразу применяется темой. */
     val uiScale = mutableFloatStateOf(1f)
@@ -53,6 +56,8 @@ class LauncherApp : Application() {
         obd = ObdManager(this, prefs)
         vehicle = VehicleRepository(this, prefs, obd)
         trip = TripComputer(prefs, obd.state)
+        media = MediaRepository(this)
+        media.refresh()
         uiScale.floatValue = prefs.uiScale.coerceIn(0.8f, 1.3f)
         // Бортовой компьютер копит данные всё время, пока идёт опрос OBD2 (в т.ч. из сервиса-прокси).
         appScope.launch { trip.run() }

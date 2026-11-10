@@ -18,7 +18,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** Собственные минималистичные линейные иконки (без чужих логотипов и без тяжёлых icon-библиотек). */
-enum class Glyph { HYBRID, NAV, PIN, RADIO, BLUETOOTH, MUSIC, GEAR, HOME, PHONE, CAR, GRID }
+enum class Glyph { HYBRID, NAV, PIN, RADIO, BLUETOOTH, MUSIC, GEAR, HOME, PHONE, CAR, GRID, PLAY, PAUSE, PREV, NEXT }
 
 fun SlotId.glyph(): Glyph = when (this) {
     SlotId.HYBRID -> Glyph.HYBRID
@@ -120,6 +120,24 @@ fun GlyphIcon(glyph: Glyph, color: Color, modifier: Modifier = Modifier.size(28.
                         size = Size(.18f * w, .18f * h), cornerRadius = CornerRadius(w * .04f)
                     )
                 }
+            }
+            Glyph.PLAY -> {
+                val path = Path().apply { moveTo(.30f * w, .16f * h); lineTo(.84f * w, .5f * h); lineTo(.30f * w, .84f * h); close() }
+                drawPath(path = path, color = color)
+            }
+            Glyph.PAUSE -> {
+                drawRoundRect(color = color, topLeft = p(.24f, .18f), size = Size(.18f * w, .64f * h), cornerRadius = CornerRadius(w * .04f))
+                drawRoundRect(color = color, topLeft = p(.58f, .18f), size = Size(.18f * w, .64f * h), cornerRadius = CornerRadius(w * .04f))
+            }
+            Glyph.PREV -> {
+                val path = Path().apply { moveTo(.84f * w, .2f * h); lineTo(.36f * w, .5f * h); lineTo(.84f * w, .8f * h); close() }
+                drawPath(path = path, color = color)
+                drawRoundRect(color = color, topLeft = p(.16f, .2f), size = Size(.12f * w, .6f * h), cornerRadius = CornerRadius(w * .03f))
+            }
+            Glyph.NEXT -> {
+                val path = Path().apply { moveTo(.16f * w, .2f * h); lineTo(.64f * w, .5f * h); lineTo(.16f * w, .8f * h); close() }
+                drawPath(path = path, color = color)
+                drawRoundRect(color = color, topLeft = p(.72f, .2f), size = Size(.12f * w, .6f * h), cornerRadius = CornerRadius(w * .03f))
             }
             Glyph.GEAR -> {
                 drawCircle(color = color, radius = w * .15f, center = center, style = stroke)

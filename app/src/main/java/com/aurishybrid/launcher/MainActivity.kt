@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -29,6 +30,7 @@ import com.aurishybrid.launcher.data.VehicleData
 import com.aurishybrid.launcher.ui.AppsScreen
 import com.aurishybrid.launcher.ui.Glyph
 import com.aurishybrid.launcher.ui.HomeScreen
+import com.aurishybrid.launcher.ui.MediaActions
 import com.aurishybrid.launcher.ui.NavItem
 import com.aurishybrid.launcher.ui.SettingsScreen
 import com.aurishybrid.launcher.ui.Shell
@@ -81,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 }
                 val data by app.vehicle.data.collectAsStateWithLifecycle(initialValue = VehicleData())
                 val trip by app.trip.state.collectAsStateWithLifecycle()
+                val media by app.media.state.collectAsStateWithLifecycle()
                 var vehicleTab by rememberSaveable { mutableStateOf(VehicleTab.ENERGY) }
                 val current = screen.value
 
@@ -145,6 +148,17 @@ class MainActivity : ComponentActivity() {
                         else -> HomeScreen(
                             data = data,
                             trip = trip,
+                            media = media,
+                            mediaActions = MediaActions(
+                                onPlayPause = { app.media.playPause() },
+                                onNext = { app.media.next() },
+                                onPrevious = { app.media.previous() },
+                                onOpen = {
+                                    val pkg = media.now?.packageName
+                                    if (pkg == null || !app.apps.launchPackage(this@MainActivity, pkg)) open(slot(SlotId.MUSIC))
+                                },
+                                onGrantAccess = { openNotificationAccess() },
+                            ),
                             shortcuts = HOME_SHORTCUTS.mapNotNull { slot(it) },
                             autostartCountdown = countdown.value,
                             onCancelAutostart = { cancelRequested = true; countdown.value = null },
@@ -173,6 +187,18 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Приложения могли быть установлены/удалены, пока лаунчер был в фоне.
         slotsVersion.intValue++
+        // Доступ к уведомлениям могли выдать, а плеер — смениться, пока лаунчер был в фоне.
+        app.media.refresh()
+    }
+
+    private fun openNotificationAccess() {
+        try {
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            Toast.makeText(
+                this, "На этой прошивке нет экрана «Доступ к уведомлениям» — см. README, раздел про ADB", Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     private suspend fun runPendingAutostart() {
